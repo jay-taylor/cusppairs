@@ -666,28 +666,6 @@ end);
 ##                     Main Functions                       ##
 ##                                                          ##
 
-# Input is a CoxeterGroup or CoxeterCoset. Returns a list of CoxeterCosets
-# that are obtained from a rational quasiisolated element of the input.
-RationalQuasiIsolatedForms := function(A)
-    local G, GF, Q;
-
-    if not IsSpets(A) then
-        GF := Spets(A);
-    else
-        GF := A;
-    fi;
-    G := Group(GF);
-    Q := QuasiIsolatedRepresentatives(Group(GF));
-
-    return Flat(List(Q, function(s)
-        local CG, A, tw;
-        A := Group(s);
-        CG := Centralizer(G,s).group;
-        tw := Twistings(GF, CG);
-        return Filtered(tw, g -> s^g.phi in A);
-    end));
-end;
-
 ##########################################################################
 ##
 #F SplitLeviCover( GF [, e] ) . . . . smallest e-split Levi containing GF.
