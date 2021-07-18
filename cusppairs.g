@@ -97,7 +97,7 @@ CHEVIE.AddData("CuspidalLevis", "A", function(n, e)
 end);
 
 CHEVIE.AddData("CuspidalLevis", "2A", function(n, e)
-    local a, d, rks;
+    local d;
 
     if e mod 4 in [1,3] then
         d := 2*e;
@@ -107,20 +107,7 @@ CHEVIE.AddData("CuspidalLevis", "2A", function(n, e)
         d := e;
     fi;
 
-    a := QuoInt(n+1, d);
-    rks := Filtered([0..a], function(k)
-        local B, p;
-        for p in Partitions(n+1-k*d) do
-            B := BetaSet(p);
-            B := PositionProperty(B, k -> (k >= d) and (not k-d in B));
-            if B = false then
-                return true;
-            fi;
-        od;
-        return false;
-    end);
-    return List(rks, k -> [[1..n-k*d],
-            Filtered([n+1-k*d..n], i -> RemInt(n+1-i,d) <> 0)]);
+    return CHEVIE.A.CuspidalLevis(n, d);
 end);
 
 CHEVIE.AddData("CuspidalLevis", "B", function(n, e)
@@ -730,7 +717,7 @@ SplitLeviCover := function(arg)
     V := VectorSpace(List(G.roots{J}, r -> r*pr), Cyclotomics, 0*G.roots[1]);
     inds := Filtered([1..Length(G.roots)], i -> G.roots[i]*pr in V);
 
-    return CoxeterSubCoset(GF, inds, LF.phi);
+    return CoxeterSubCoset(GF, inds, LF.phi*GF.phi^-1);
 end;
 
 ##########################################################################
@@ -755,15 +742,17 @@ CuspidalLevis := function(arg)
 
     inc := Group(GF).rootInclusion;
     res := List(ReflectionType(GF), function(t)
-        local o, I, w0, m;
+        local o, r, d, I, w0, m;
         o := t.orbit[1];
+        r := Length(t.orbit);
         I := o.indices;
+        d := QuoInt(e, GcdInt(r,e));
         if o.series = "A" and OrderPerm(t.twist) = 2 then
             w0 := LongestCoxeterElement(Group(GF), inc{I});
         else
             w0 := ();
         fi;
-        return List(CHEVIE.Data("CuspidalLevis", t, e), function(T)
+        return List(CHEVIE.Data("CuspidalLevis", t, d), function(T)
             local w, J;
             w := EltWord(Group(GF), inc{I{T[2]}})*w0;
             J := List([0..Length(t.orbit)-1], i -> phi^i);
@@ -772,10 +761,17 @@ CuspidalLevis := function(arg)
          end);
     end);
 
-    return List(Cartesian(res), R ->
-        CoxeterSubCoset(GF, Concatenation(List(R, r -> r[1])),
-            Product(List(R, r -> r[2])))
-    );
+    return List(Cartesian(res), function(R)
+        local I, w;
+        if R = [] then
+            I := [];
+            w := ();
+        else
+            I := Concatenation(List(R, r -> r[1]));
+            w := Product(List(R, r -> r[2]));
+        fi;
+        return CoxeterSubCoset(GF, I, w);
+    end);
 end;
 
 ##########################################################################
